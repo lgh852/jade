@@ -1,0 +1,33 @@
+services:
+  jade-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: jade-api:latest
+    container_name: jade-api
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=75.0"
+      JADEHR_BASE_URL: "https://ehr.jadehr.co.kr"
+      JADEHR_DEFAULT_COMPANY_CODE: "2202010"
+      JADEHR_CONNECT_TIMEOUT: "5s"
+      JADEHR_RESPONSE_TIMEOUT: "20s"
+      JADEHR_TRUST_STORE_PATH: ""
+      JADEHR_TRUST_STORE_PASSWORD: ""
+      JADE_DATASOURCE_URL: "${JADE_DATASOURCE_URL:-}"
+      JADE_DATASOURCE_USERNAME: "${JADE_DATASOURCE_USERNAME:-}"
+      JADE_DATASOURCE_PASSWORD: "${JADE_DATASOURCE_PASSWORD:-}"
+      JADE_AUTH_CRYPTO_SECRET: "${JADE_AUTH_CRYPTO_SECRET:-}"
+      TELEGRAM_BOT_TOKEN: "${TELEGRAM_BOT_TOKEN:-}"
+      TELEGRAM_CHAT_ID: "${TELEGRAM_CHAT_ID:-}"
+      LOGGING_LEVEL_CO_KR_GHLEE_JADE_API_JADEHR: "INFO"
+      LOGGING_LEVEL_CO_KR_GHLEE_JADE_COMMON_API: "INFO"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/actuator/health | grep -q UP"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 40s

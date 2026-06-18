@@ -1,0 +1,94 @@
+name: Deploy API
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+concurrency:
+  group: jade-api-deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: gradle
+
+      - name: Build
+        run: ./gradlew test bootJar --no-daemon
+
+      - name: Package deploy artifact
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/jade-api-deploy/build/libs
+          cp Dockerfile docker-compose.yml /tmp/jade-api-deploy/
+          cp build/libs/*.jar /tmp/jade-api-deploy/build/libs/
+          tar -C /tmp -czf /tmp/jade-api-deploy.tgz jade-api-deploy
+
+      - name: Configure SSH
+        env:
+          JADE_API_HOST: ${{ secrets.JADE_API_HOST }}
+          JADE_API_SSH_KEY: ${{ secrets.JADE_API_SSH_KEY }}
+          JADE_API_SSH_PORT: ${{ secrets.JADE_API_SSH_PORT || '22' }}
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "$JADE_API_SSH_KEY" > ~/.ssh/jade_api_key
+          chmod 600 ~/.ssh/jade_api_key
+          ssh-keyscan -p "$JADE_API_SSH_PORT" "$JADE_API_HOST" >> ~/.ssh/known_hosts
+
+      - name: Upload artifact
+        env:
+          JADE_API_HOST: ${{ secrets.JADE_API_HOST }}
+          JADE_API_SSH_USER: ${{ secrets.JADE_API_SSH_USER || 'ec2-user' }}
+          JADE_API_SSH_PORT: ${{ secrets.JADE_API_SSH_PORT || '22' }}
+        run: |
+          set -euo pipefail
+          scp -P "$JADE_API_SSH_PORT" -i ~/.ssh/jade_api_key /tmp/jade-api-deploy.tgz \
+            "$JADE_API_SSH_USER@$JADE_API_HOST:/tmp/jade-api-deploy.tgz"
+
+      - name: Deploy
+        env:
+          JADE_API_HOST: ${{ secrets.JADE_API_HOST }}
+          JADE_API_SSH_USER: ${{ secrets.JADE_API_SSH_USER || 'ec2-user' }}
+          JADE_API_SSH_PORT: ${{ secrets.JADE_API_SSH_PORT || '22' }}
+        run: |
+          set -euo pipefail
+          ssh -p "$JADE_API_SSH_PORT" -i ~/.ssh/jade_api_key "$JADE_API_SSH_USER@$JADE_API_HOST" <<'REMOTE'
+            set -euo pipefail
+
+            if [ ! -f /opt/jade-api/.env ]; then
+              echo "/opt/jade-api/.env is required before deploy." >&2
+              exit 1
+            fi
+
+            sudo mkdir -p /opt/jade-api
+            sudo rm -rf /tmp/jade-api-deploy
+            sudo tar -xzf /tmp/jade-api-deploy.tgz -C /tmp
+            sudo rsync -a --delete --exclude '.env' /tmp/jade-api-deploy/ /opt/jade-api/
+            sudo rm -rf /tmp/jade-api-deploy /tmp/jade-api-deploy.tgz
+
+            cd /opt/jade-api
+            sudo /usr/local/bin/docker-compose --env-file /opt/jade-api/.env up -d --build
+            sudo /usr/local/bin/docker-compose --env-file /opt/jade-api/.env ps
+          REMOTE
+
+      - name: Verify
+        env:
+          JADE_API_URL: ${{ secrets.JADE_API_URL }}
+        run: |
+          set -euo pipefail
+          curl --fail --retry 10 --retry-delay 5 --max-time 10 "$JADE_API_URL/actuator/health"

@@ -1,0 +1,10 @@
+.gradle
+build/*
+!build/libs
+!build/libs/*.jar
+.git
+.idea
+*.iml
+*.log
+config/*.p12
+config/*.jks
