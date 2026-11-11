@@ -5,6 +5,7 @@ import co.kr.ghlee.jade.api.jadehr.domain.AttendanceDay
 import co.kr.ghlee.jade.api.jadehr.domain.AttendanceSummary
 import co.kr.ghlee.jade.api.jadehr.exception.JadeHrParseException
 import org.jsoup.Jsoup
+import org.jsoup.nodes.Element
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import java.time.LocalDate
@@ -37,6 +38,12 @@ class AttendanceCalendarParser {
         val days = dayCells
             .filterNot { it.classNames().contains("other") }
             .mapNotNull { cell ->
+                // 2026-08 이후 JadeHR 마크업: 칸 안에 줄바꿈 없이 .day / .workItem / .workTime 태그로만 구분된다
+                if (cell.selectFirst("span.day") != null) {
+                    return@mapNotNull parseStructuredCell(cell, yearMonth)
+                }
+
+
                 val lines = cell.wholeText()
                     .lines()
                     .map { it.trim() }
@@ -70,6 +77,43 @@ class AttendanceCalendarParser {
             month = yearMonth.monthValue,
             days = days,
             summary = parseSummary(document.body().wholeText()),
+        )
+    }
+
+    private fun parseStructuredCell(
+        cell: Element,
+        yearMonth: YearMonth,
+    ): AttendanceDay? {
+        // 오늘 칸은 class 속성 따옴표가 깨져 ymd 가 안 읽힐 수 있어 .day 텍스트를 우선한다
+        val dayOfMonth = cell.selectFirst("span.day")?.text()?.trim()?.toIntOrNull()
+            ?: cell.attr("ymd").trim().takeLast(2).toIntOrNull()
+            ?: return null
+        if (dayOfMonth !in 1..yearMonth.lengthOfMonth()) return null
+
+        // 실제 기록은 일반 span, 계획 시간은 span.noWorkTime 으로 내려온다
+        val actualTimes = cell.select("p.workTime span")
+            .filterNot { it.hasClass("noWorkTime") }
+            .flatMap { span -> TIME_REGEX.findAll(span.text()).map { LocalTime.parse(it.value) }.toList() }
+
+        val planTimes = cell.select("p.workTime span.noWorkTime")
+            .flatMap { span -> TIME_REGEX.findAll(span.text()).map { LocalTime.parse(it.value) }.toList() }
+
+        val workItems = cell.select("span.workItem > span")
+            .map { it.text().trim() }
+            .filter { it.isNotBlank() }
+        val listEvents = cell.select("ul.workTimeList li")
+            .map { it.text().trim() }
+            .filter { it.isNotBlank() }
+
+        return AttendanceDay(
+            date = yearMonth.atDay(dayOfMonth),
+            workType = workItems.firstOrNull(),
+            actualStartTime = actualTimes.getOrNull(0),
+            actualEndTime = actualTimes.getOrNull(1),
+            events = workItems.drop(1) + listEvents,
+            // 계획 시각: 둘이면 시작~종료, 하나면(출근만 찍힌 날) 종료 계획
+            planStartTime = if (planTimes.size >= 2) planTimes[0] else null,
+            planEndTime = planTimes.lastOrNull(),
         )
     }
 
@@ -113,6 +157,7 @@ class AttendanceCalendarParser {
     companion object {
         private val log = LoggerFactory.getLogger(AttendanceCalendarParser::class.java)
         private val TIME_RANGE_REGEX = Regex("""(\d{2}:\d{2})~(\d{2}:\d{2})""")
+        private val TIME_REGEX = Regex("""\d{2}:\d{2}""")
         private val DATE_REGEX = Regex("""\d{4}\.\d{2}\.\d{2}""")
     }
 }

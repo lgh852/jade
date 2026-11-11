@@ -11,4 +11,6 @@ data class JadeHrProperties(
     val responseTimeout: Duration = Duration.ofSeconds(20),
     val trustStorePath: String? = null,
     val trustStorePassword: String? = null,
+    /** 신청서 결재선에서 기본으로 빼는 결재자 사번 (화면에서 다시 넣을 수 있음) */
+    val defaultExcludedApproverIds: List<String> = listOf("15250101"),
 )

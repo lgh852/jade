@@ -54,6 +54,21 @@ class JadeAuthUserService(
         )
     }
 
+    // 캘린더 화면용: JadeHR 아이디로 저장된 인증정보를 찾는다 (같은 아이디가 여러 건이면 가장 먼저 등록된 것)
+    suspend fun resolveCredentialByJadeHrUserId(jadeHrUserId: String): JadeHrCredential =
+        resolvePrincipalByJadeHrUserId(jadeHrUserId).credential
+
+    suspend fun resolvePrincipalByJadeHrUserId(jadeHrUserId: String): JadeAuthPrincipal = withContext(Dispatchers.IO) {
+        val user = repository.findFirstByJadeHrUserIdAndActiveTrueOrderByIdAsc(jadeHrUserId)
+            ?: throw JadeAuthUserNotFoundException("등록되지 않은 아이디입니다: $jadeHrUserId")
+
+        JadeAuthPrincipal(
+            authKey = user.authKey,
+            nickname = user.nickname?.takeIf { it.isNotBlank() } ?: user.authKey,
+            credential = user.toCredential(credentialEncryptor.decrypt(user.jadeHrPasswordEnc)),
+        )
+    }
+
     private fun JadeAuthUser.toResult(): JadeAuthUserResult =
         JadeAuthUserResult(
             id = id,

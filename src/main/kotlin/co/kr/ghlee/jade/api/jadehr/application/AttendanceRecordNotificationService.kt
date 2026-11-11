@@ -43,6 +43,22 @@ class AttendanceRecordNotificationService(
         }
     }
 
+    /** 임의 문구 전송 */
+    suspend fun sendText(text: String) {
+        if (properties.botToken.isBlank() || properties.chatId.isBlank()) return
+        runCatching {
+            webClientBuilder
+                .baseUrl("https://api.telegram.org")
+                .build()
+                .post()
+                .uri("/bot{token}/sendMessage", properties.botToken)
+                .body(BodyInserters.fromFormData("chat_id", properties.chatId).with("text", text))
+                .retrieve()
+                .bodyToMono(String::class.java)
+                .awaitSingleOrNull()
+        }.onFailure { log.warn("Telegram notification failed.", it) }
+    }
+
     private fun buildMessage(
         nickname: String,
         type: AttendanceRecordType,

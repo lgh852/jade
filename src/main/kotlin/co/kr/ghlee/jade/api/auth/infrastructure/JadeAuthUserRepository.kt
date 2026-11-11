@@ -7,4 +7,8 @@ interface JadeAuthUserRepository : JpaRepository<JadeAuthUser, Long> {
     fun findByAuthKeyAndActiveTrue(authKey: String): JadeAuthUser?
 
     fun findByAuthKey(authKey: String): JadeAuthUser?
+
+    fun findFirstByJadeHrUserIdAndActiveTrueOrderByIdAsc(jadeHrUserId: String): JadeAuthUser?
+
+    fun findAllByJadeHrUserIdAndActiveTrueOrderByIdAsc(jadeHrUserId: String): List<JadeAuthUser>
 }

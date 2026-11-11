@@ -1,5 +1,6 @@
 package co.kr.ghlee.jade.api.jadehr.presentation
 
+import co.kr.ghlee.jade.api.auth.application.JadeAuthUserService
 import co.kr.ghlee.jade.api.jadehr.infrastructure.config.JadeHrProperties
 import co.kr.ghlee.jade.api.jadehr.domain.AttendanceCalendar
 import co.kr.ghlee.jade.api.jadehr.domain.AttendanceWorkItem
@@ -24,6 +25,7 @@ import java.time.YearMonth
 @RequestMapping("/api/jadehr")
 class AttendanceCalendarController(
     private val attendanceCalendarService: AttendanceCalendarService,
+    private val jadeAuthUserService: JadeAuthUserService,
     private val properties: JadeHrProperties,
 ) {
 
@@ -37,6 +39,18 @@ class AttendanceCalendarController(
         attendanceCalendarService.getCalendar(
             companyCode = companyCode ?: properties.defaultCompanyCode,
             userId = userId,
+            yearMonth = YearMonth.of(year, month),
+        )
+
+    // 캘린더 화면(/calendar.html?id=...)용: 등록된 인증정보로 로그인해 조회한다
+    @GetMapping("/attendance-calendar/by-id")
+    suspend fun getAttendanceCalendarById(
+        @RequestParam id: String,
+        @RequestParam @Min(2000) @Max(2100) year: Int,
+        @RequestParam @Min(1) @Max(12) month: Int,
+    ): AttendanceCalendar =
+        attendanceCalendarService.getCalendar(
+            credential = jadeAuthUserService.resolveCredentialByJadeHrUserId(id.trim()),
             yearMonth = YearMonth.of(year, month),
         )
 

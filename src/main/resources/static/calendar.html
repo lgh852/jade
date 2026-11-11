@@ -1,0 +1,1043 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>근태 캘린더</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..24,400,0,0&display=block" data-ms>
+<style>
+  /* 홈닷 허브(hd-ds 1.8 · HomeDot 테마) 기준 — 라이트 전용, Pretendard, 4px 그리드 */
+  :root {
+    --primary: #5534e1; --primary-hover: #4529c0; --primary-pressed: #351f9e; --primary-weak: #f4f2fe; --primary-ring: #e6e0fd; --primary-text: #351f9e;
+    --text-strong: #1a1c20; --text: #2a3038; --text-alt: #555d6d; --text-mute: #868b94;
+    --bg: #ffffff; --bg-sub: #f3f4f5; --bg-hover: #f7f8f9; --bg-disable: #eeeff1;
+    --line: #dcdee3; --line-muted: #eeeff1; --line-disable: #d1d3d8;
+    --green: #17b26a; --green-bg: #e5f6ec; --green-text: #009153;
+    --blue: #0099ff; --blue-bg: #e2f3ff; --blue-text: #0075ff;
+    --yellow: #ffb515; --yellow-bg: #fff8e2; --yellow-text: #fe9111;
+    --red: #ff4242; --red-bg: #feecec; --red-text: #b00c0c;
+    --out: #23d35e; --out-text: #00a624;
+    --shadow-md: 0 2px 10px rgba(42,48,56,.2); --shadow-xl: 0 8px 32px rgba(42,48,56,.3);
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 14px/22px Pretendard, -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; }
+  button, input, select, textarea { font-family: inherit; }
+  .ms { font-family: 'Material Symbols Outlined'; font-weight: normal; font-style: normal; font-size: 20px; line-height: 1; letter-spacing: normal; text-transform: none; white-space: nowrap; direction: ltr; -webkit-font-feature-settings: 'liga'; font-feature-settings: 'liga'; -webkit-font-smoothing: antialiased; display: inline-block; vertical-align: middle; }
+  .wrap { padding: 24px 32px 48px; max-width: 1280px; }
+
+  /* ---- 페이지 타이틀 (PageHeader) ---- */
+  .page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
+  .crumb { display: flex; align-items: center; gap: 2px; font-size: 12px; line-height: 19px; color: var(--text-mute); margin-bottom: 2px; }
+  .crumb .ms { font-size: 16px; }
+  h1 { font-size: 28px; line-height: 45px; font-weight: 700; color: var(--text-strong); margin: 0; }
+  .who { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 4px; font-size: 14px; color: var(--text-alt); }
+  .head-actions { display: flex; gap: 8px; }
+
+  /* ---- 버튼 (hd-ds Button) ---- */
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 38px; min-width: 76px; padding: 8px 16px; border-radius: 6px; border: 1px solid var(--line); background: #fff; color: var(--text); font-size: 14px; line-height: 22px; font-weight: 500; cursor: pointer; white-space: nowrap; transition: background .12s, border-color .12s; }
+  .btn:hover { background: var(--bg-hover); }
+  .btn:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--primary-ring); }
+  .btn:disabled { cursor: default; color: var(--line-disable); border-color: var(--line-muted); background: #fff; }
+  .btn.sm { height: 32px; min-width: 70px; padding: 4px 12px; }
+  .btn.lg { height: 48px; min-width: 96px; padding: 12px 16px; font-size: 16px; line-height: 24px; }
+  .btn.icon { min-width: 0; width: 32px; padding: 0; }
+  .btn .ms { font-size: 16px; }
+  .btn.lg .ms, .btn.icon .ms { font-size: 20px; }
+  .btn.primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+  .btn.primary:hover { background: var(--primary-hover); border-color: var(--primary-hover); }
+  .btn.primary:active { background: var(--primary-pressed); }
+  .btn.primary:disabled { background: var(--line-disable); border-color: var(--line-disable); color: #fff; }
+  .btn.text { border-color: transparent; background: transparent; color: var(--text); min-width: 0; }
+  .btn.text:hover { background: var(--bg-sub); }
+  .btn.text:disabled { color: var(--line-disable); }
+
+  /* ---- 뱃지 (hd-ds Badge, small) ---- */
+  .bd { display: inline-flex; align-items: center; gap: 4px; max-width: 100%; padding: 2px 8px; border-radius: 999px; font-size: 12px; line-height: 19px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; background: var(--bg-sub); color: var(--text); }
+  .bd.green { background: var(--green-bg); color: var(--green-text); }
+  .bd.blue { background: var(--blue-bg); color: var(--blue-text); }
+  .bd.red { background: var(--red-bg); color: var(--red-text); }
+  .bd.yellow { background: var(--yellow-bg); color: var(--yellow-text); }
+  .bd.brand { background: var(--primary-weak); color: var(--primary-text); }
+  .bd b { font-weight: 700; }
+
+  /* ---- 출퇴근 기록 칩 (허브 AttendanceRecordChip: 왼쪽 4px 막대 + 본문) ---- */
+  .rc { display: inline-flex; align-items: stretch; height: 24px; max-width: 100%; font-size: 12px; line-height: 20px; white-space: nowrap; }
+  .rc::before { content: ""; flex: none; width: 4px; border-radius: 4px 0 0 4px; background: currentColor; }
+  .rc > span { display: inline-flex; align-items: center; gap: 4px; padding: 2px 6px; border-radius: 0 4px 4px 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  .rc b { font-weight: 700; }
+  .rc.in { color: var(--blue); } .rc.in > span { background: var(--blue-bg); color: var(--blue-text); }
+  .rc.out { color: var(--out); } .rc.out > span { background: var(--green-bg); color: var(--out-text); }
+  .rc.leave { color: var(--red); } .rc.leave > span { background: var(--red-bg); color: var(--red-text); }
+
+  /* ---- 월 이동 · 범례 ---- */
+  .toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+  .month-nav { display: flex; align-items: center; gap: 8px; }
+  .month { min-width: 112px; text-align: center; font-size: 20px; line-height: 32px; font-weight: 700; color: var(--text-strong); }
+  .legend { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .legend .zero { opacity: .45; }
+
+  /* ---- 신청 바 (허브 검색 필터 박스 모양) ---- */
+  .apply-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; padding: 12px 16px; background: var(--bg-sub); border-radius: 8px; }
+  .apply-bar .picked { font-size: 14px; color: var(--text-alt); }
+  .apply-bar .picked b { color: var(--text-strong); font-weight: 600; }
+  .apply-bar .btns { display: flex; gap: 8px; flex-wrap: wrap; }
+  .apply-bar .note { width: 100%; font-size: 12px; color: var(--text-mute); }
+  .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+  .dot.green { background: var(--green); } .dot.red { background: var(--red); } .dot.blue { background: var(--blue); }
+  .btn:disabled .dot { opacity: .4; }
+
+  /* ---- 달력 (허브 테이블 규칙: 1px #DCDEE3, 헤더 #F3F4F5 40px) ---- */
+  .grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: #fff; }
+  .dow { height: 40px; display: flex; align-items: center; justify-content: center; background: var(--bg-sub); border-bottom: 1px solid var(--line); font-size: 14px; font-weight: 600; color: var(--text-alt); }
+  .dow.sun { color: var(--red); }
+  .cell { min-height: 116px; padding: 8px; border-right: 1px solid var(--line-muted); border-bottom: 1px solid var(--line-muted); display: flex; flex-direction: column; align-items: flex-start; gap: 4px; min-width: 0; transition: background .12s; }
+  .cell:nth-child(7n) { border-right: none; }
+  .cell[data-date] { cursor: pointer; user-select: none; }
+  .cell[data-date]:hover { background: var(--bg-hover); }
+  .cell.empty { background: var(--bg-hover); }
+  .cell.off { background: var(--bg-hover); }
+  .cell.sel, .cell.sel:hover { background: var(--primary-weak); box-shadow: inset 0 0 0 2px var(--primary); }
+  .num { display: inline-flex; align-items: center; justify-content: center; min-width: 24px; height: 24px; margin: -2px 0 2px -2px; padding: 0 4px; border-radius: 999px; font-size: 14px; font-weight: 600; color: var(--text); }
+  .sun .num, .cell.holi .num { color: var(--red); }
+  .sat .num { color: var(--text-mute); }
+  .cell.today .num { background: var(--primary); color: #fff; }
+  .chips { display: flex; flex-wrap: wrap; gap: 4px; max-width: 100%; }
+  .plan { font-size: 12px; line-height: 19px; color: var(--text-mute); font-variant-numeric: tabular-nums; }
+  .recs { display: flex; flex-direction: column; gap: 4px; max-width: 100%; font-variant-numeric: tabular-nums; }
+  .auto { display: inline-flex; align-items: center; gap: 2px; font-size: 12px; line-height: 19px; color: var(--primary); font-variant-numeric: tabular-nums; }
+  .auto .ms { font-size: 14px; }
+  .ev { font-size: 12px; line-height: 19px; color: var(--text-mute); }
+  .msg { padding: 48px 16px; text-align: center; color: var(--text-mute); border: 1px solid var(--line); border-radius: 8px; }
+  .msg.error { color: var(--red-text); background: var(--red-bg); border-color: var(--red-bg); }
+
+  /* ---- 모달 (hd-ds Modal) ---- */
+  .modal-bg { position: fixed; inset: 0; background: rgba(26,28,32,.7); display: none; align-items: center; justify-content: center; padding: 16px; z-index: 30; }
+  .modal-bg.open { display: flex; }
+  .modal { width: 100%; max-width: 480px; max-height: calc(100vh - 32px); overflow-y: auto; background: #fff; color: var(--text); border-radius: 16px; padding: 24px 24px 0; box-shadow: var(--shadow-xl); }
+  .modal.wide { max-width: 560px; }
+  .m-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 4px; }
+  .modal h2 { font-size: 24px; line-height: 38px; font-weight: 700; color: var(--text-strong); margin: 0; }
+  .m-close { flex: none; width: 32px; height: 32px; margin: 3px -4px 0 0; border: none; background: transparent; border-radius: 6px; color: var(--text-strong); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+  .m-close:hover { background: var(--bg-sub); }
+  .m-close .ms { font-size: 24px; }
+  .modal .desc { color: var(--text-alt); font-size: 14px; line-height: 22px; margin: 0; }
+  .modal .desc + .row { margin-top: 24px; }
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; font-size: 14px; font-weight: 500; color: var(--text); }
+  .row small { color: var(--text-mute); font-weight: 400; }
+  .row input[type=time] { width: 160px; flex: none; }
+  .last { color: var(--text-mute); font-size: 12px; line-height: 19px; margin: 4px 0 0; }
+  .modal .err { color: var(--red); font-size: 12px; line-height: 19px; min-height: 19px; margin: 8px 0 0; }
+  .actions { position: sticky; bottom: 0; display: flex; gap: 12px; margin: 8px -24px 0; padding: 24px; background: #fff; }
+  .actions .btn { flex: 1 1 0; height: 48px; font-size: 16px; }
+  .block { width: 100%; }
+
+  /* ---- 입력 (hd-ds TextField · Select, medium 38) ---- */
+  .ctl, .f-input, .f-text, .row input[type=time] { width: 100%; height: 38px; padding: 6px 12px; border: 1px solid var(--line); border-radius: 6px; background: #fff; color: var(--text); font-size: 14px; outline: none; transition: border-color .12s, box-shadow .12s; }
+  .row input[type=time] { width: 160px; }
+  .ctl:hover, .f-text:hover, .row input[type=time]:hover { box-shadow: 0 2px 8px rgba(42,48,56,.1); }
+  .ctl:focus, .f-text:focus, .row input[type=time]:focus { border-color: var(--primary); box-shadow: none; }
+  select.ctl { appearance: none; -webkit-appearance: none; padding-right: 36px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24'%3E%3Cpath d='M7 10l5 5 5-5z' fill='%23555d6d'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; }
+  .ctl:disabled, .f-input:disabled { background-color: var(--bg-disable); border-color: var(--line-disable); color: var(--text-mute); box-shadow: none; }
+  .f-text { height: auto; min-height: 88px; padding: 8px 12px; line-height: 22px; resize: vertical; }
+  .f-text::placeholder, .ctl::placeholder { color: var(--text-mute); }
+  .f-label { display: block; font-size: 14px; font-weight: 500; color: var(--text); margin: 20px 0 4px; }
+  .f-label .req { color: var(--red); }
+
+  /* 토글 (hd-ds Switch 36×20) */
+  .switch { position: relative; width: 36px; height: 20px; flex: none; }
+  .switch input { opacity: 0; width: 0; height: 0; position: absolute; }
+  .switch span { position: absolute; inset: 0; background: var(--line-disable); border-radius: 10px; transition: background .12s; cursor: pointer; }
+  .switch span::before { content: ""; position: absolute; width: 16px; height: 16px; left: 2px; top: 2px; background: #fff; border-radius: 50%; box-shadow: 0 1px 3px rgba(26,28,32,.15); transition: transform .12s; }
+  .switch input:checked + span { background: var(--primary); }
+  .switch input:checked + span::before { transform: translateX(16px); }
+  .switch input:focus-visible + span { box-shadow: 0 0 0 2px var(--primary-ring); }
+
+  /* 신청 날짜 목록 (테이블 행 모양) */
+  .days { border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+  .day-row { display: flex; flex-direction: column; gap: 8px; padding: 12px 16px; border-bottom: 1px solid var(--line); }
+  .day-row:last-child { border-bottom: none; }
+  .day-row .head { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+  .day-row .d { flex: none; font-weight: 600; color: var(--text-strong); }
+  .day-row .cur { flex: 1; min-width: 0; color: var(--text-mute); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .day-row.skip { background: var(--bg-hover); }
+  .day-row.skip .d { color: var(--text-mute); }
+  .day-row.skip .cur { color: var(--red); }
+  .day-row .ctrl { display: grid; grid-template-columns: 1fr; gap: 8px; }
+  .day-row .ctrl.two { grid-template-columns: minmax(0, 1fr) 140px; }
+  .day-row .times { display: grid; grid-template-rows: 0fr; opacity: 0; margin-top: -8px; transition: grid-template-rows .2s ease, opacity .2s ease, margin-top .2s ease; }
+  .day-row .times.open { grid-template-rows: 1fr; opacity: 1; margin-top: 0; }
+  .day-row .times-in { overflow: hidden; display: flex; gap: 8px; }
+  .day-row .tf { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+  .day-row .tf[hidden] { display: none; }
+  .day-row .tf > span { font-size: 12px; color: var(--text-alt); }
+
+  /* 결재선 */
+  .line { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 14px; }
+  .line .p { display: inline-flex; align-items: center; height: 32px; padding: 4px 12px; border-radius: 999px; background: var(--bg-sub); color: var(--text); font-weight: 500; }
+  .line .p.ok { background: var(--primary-weak); color: var(--primary-text); }
+  .line .p.toggle { cursor: pointer; border: 1px solid var(--line); background: #fff; transition: background .12s, border-color .12s; }
+  .line .p.toggle:hover { background: var(--bg-hover); }
+  .line .p.toggle:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--primary-ring); }
+  .line .p.ex { text-decoration: line-through; color: var(--text-mute); background: var(--bg-disable); border-color: var(--bg-disable); font-weight: 400; }
+  .line .line-msg { color: var(--text-mute); }
+  .line .line-msg.err { color: var(--red); }
+  .line .line-help { width: 100%; color: var(--text-mute); font-size: 12px; line-height: 19px; margin-top: 2px; }
+  .line .arrow { color: var(--text-mute); font-size: 18px; }
+  .summary { margin-top: 16px; padding: 12px 16px; border-radius: 8px; background: var(--bg-sub); font-size: 14px; line-height: 22px; color: var(--text); }
+
+  /* ---- 태블릿 ---- */
+  @media (max-width: 900px) {
+    .wrap { padding: 20px 20px 40px; }
+  }
+
+  /* ---- 휴대폰 (아이폰 mini~Pro Max · 갤럭시 S·Z플립 360~440) ---- */
+  @media (max-width: 600px) {
+    .wrap { padding: 16px 12px calc(32px + env(safe-area-inset-bottom)); }
+    .page-head { flex-direction: column; align-items: stretch; gap: 12px; margin-bottom: 16px; }
+    h1 { font-size: 20px; line-height: 32px; }
+    .who { font-size: 12px; margin-top: 2px; }
+    .head-actions .btn { flex: 1 1 0; }
+    .toolbar { flex-direction: column; align-items: stretch; gap: 10px; }
+    .month-nav { justify-content: space-between; }
+    .month { flex: 1; font-size: 18px; }
+    .legend { flex-wrap: nowrap; overflow-x: auto; margin: 0 -12px; padding: 0 12px; scrollbar-width: none; }
+    .legend::-webkit-scrollbar { display: none; }
+    .legend > * { flex: none; }
+    .apply-bar { padding: 12px; gap: 8px; }
+    .apply-bar .picked { width: 100%; font-size: 13px; }
+    .apply-bar .btns { width: 100%; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+    .apply-bar .btn { min-width: 0; padding: 4px 6px; font-size: 13px; gap: 4px; }
+    .apply-bar #clearPick { grid-column: 1 / -1; height: 28px; }
+    .apply-bar #clearPick:disabled { display: none; }
+
+    /* 달력: 한 칸 약 50px — 기록 칩은 막대+시각만, 시각 두 줄 */
+    .dow { height: 32px; font-size: 12px; }
+    .cell { min-height: 76px; padding: 4px 2px 6px; gap: 3px; align-items: center; text-align: center; }
+    .num { min-width: 22px; height: 22px; margin: 0; font-size: 12px; }
+    .chips { justify-content: center; gap: 2px; }
+    .bd { font-size: 10px; line-height: 14px; padding: 1px 4px; white-space: normal; word-break: keep-all; text-align: center; }
+    .bd .pd { display: none; }
+    .recs { gap: 2px; align-items: center; }
+    .rc { height: 18px; font-size: 10.5px; line-height: 16px; }
+    .rc::before { width: 3px; }
+    .rc > span { padding: 1px 3px; letter-spacing: -.02em; }
+    .rc .lb { display: none; }
+    .plan { display: flex; flex-direction: column; font-size: 10px; line-height: 14px; }
+    .plan .pl, .plan .tl { display: none; }
+    .auto { flex-direction: column; font-size: 10px; line-height: 14px; }
+    .auto .ms, .auto .tl { display: none; }
+    .ev { display: none; }
+
+    /* 팝업: 아래에서 올라오는 시트, 버튼은 하단 고정 */
+    .modal-bg { align-items: flex-end; padding: 0; }
+    .modal, .modal.wide { max-width: none; max-height: calc(100dvh - 24px); border-radius: 16px 16px 0 0; padding: 20px 16px 0; }
+    .modal h2 { font-size: 20px; line-height: 32px; }
+    .m-close { margin-top: 0; }
+    .actions { margin: 8px -16px 0; padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); border-top: 1px solid var(--line-muted); }
+    .row input[type=time] { width: 156px; }
+    .day-row { padding: 12px; }
+    .day-row .ctrl.two { grid-template-columns: minmax(0, 1fr) 116px; }
+    /* iOS 는 16px 미만 입력칸에 포커스하면 화면을 확대한다 */
+    .ctl, .f-input, .f-text, .row input[type=time], select, textarea, input { font-size: 16px; }
+  }
+  @media (max-width: 374px) {
+    .cell { min-height: 70px; }
+    .rc { font-size: 9.5px; }
+  }
+</style>
+</head>
+<body>
+<script src="/sidebar.js"></script>
+<div class="wrap">
+  <div class="page-head">
+    <div>
+      <div class="crumb">근태<span class="ms" aria-hidden="true">chevron_right</span>근태 캘린더</div>
+      <h1>근태 캘린더</h1>
+      <div class="who" id="who"></div>
+    </div>
+    <div class="head-actions">
+      <button id="planBtn" type="button" class="btn"><span class="ms" aria-hidden="true">event_note</span>일정 자동 등록</button>
+      <button id="autoBtn" type="button" class="btn primary"><span class="ms" aria-hidden="true">schedule</span>자동 출퇴근</button>
+    </div>
+  </div>
+  <div class="toolbar">
+    <div class="month-nav">
+      <button id="prev" type="button" class="btn sm icon" aria-label="이전 달"><span class="ms">chevron_left</span></button>
+      <div class="month" id="month"></div>
+      <button id="next" type="button" class="btn sm icon" aria-label="다음 달"><span class="ms">chevron_right</span></button>
+      <button id="thisMonth" type="button" class="btn sm">이번 달</button>
+    </div>
+    <div class="legend">
+      <span class="rc in"><span>출근</span></span>
+      <span class="rc out"><span>퇴근</span></span>
+      <span class="rc leave"><span>휴가</span></span>
+      <span class="bd green">재택</span>
+      <span class="bd brand">결재중</span>
+      <span class="bd red" title="출근만 찍히고 퇴근 기록이 없는 지난 근무일">퇴근 누락 <b id="cntMiss">0</b></span>
+      <span class="bd yellow" title="출퇴근이 찍혔는데 근무시간(휴게 제외)+연차가 8시간 미만인 날">8시간 미만 <b id="cntShort">0</b></span>
+    </div>
+  </div>
+  <div class="apply-bar" id="applyBar">
+    <div class="picked" id="picked">달력에서 날짜를 눌러 선택하세요</div>
+    <div class="btns">
+      <button type="button" class="btn sm" data-apply="home" disabled><i class="dot green"></i>재택 신청</button>
+      <button type="button" class="btn sm" data-apply="leave" disabled><i class="dot red"></i>휴가 신청</button>
+      <button type="button" class="btn sm" data-apply="att" disabled><i class="dot blue"></i>출퇴근 등록 요청</button>
+      <button type="button" class="btn sm text" id="clearPick" disabled>선택 해제</button>
+    </div>
+    <div class="note" id="applyNote" hidden></div>
+  </div>
+  <div id="content"></div>
+</div>
+<div class="modal-bg" id="planModal" role="dialog" aria-modal="true" aria-labelledby="planTitle">
+  <form class="modal" id="planForm">
+    <div class="m-head"><h2 id="planTitle">근무 일정 자동 등록</h2><button type="button" class="m-close" id="planX" aria-label="닫기"><span class="ms">close</span></button></div>
+    <p class="desc">매주 월요일 07:00에 JadeHR 근태현황 &gt; 일정등록에서 등록 가능한 날(당일 ~ 다음 달, 평일·공휴일 제외)을 이 시간대로 등록합니다. 이미 잡힌 일정도 덮어씁니다.</p>
+    <div class="row">
+      <label for="planEnabled">자동 등록 사용</label>
+      <label class="switch"><input type="checkbox" id="planEnabled"><span></span></label>
+    </div>
+    <div class="row">
+      <label for="planStart">시작 시각</label>
+      <input type="time" id="planStart" step="1800">
+    </div>
+    <div class="row">
+      <label for="planEnd">종료 시각</label>
+      <input type="time" id="planEnd" step="1800">
+    </div>
+    <button type="button" class="btn sm block" id="planPreview"><span class="ms" aria-hidden="true">visibility</span>등록할 날 미리보기</button>
+    <p class="last" id="planLast"></p>
+    <p class="err" id="planErr"></p>
+    <div class="actions">
+      <button type="button" class="btn" id="planCancel">취소</button>
+      <button type="submit" class="btn primary save" id="planSave">저장</button>
+    </div>
+  </form>
+</div>
+<div class="modal-bg" id="autoModal" role="dialog" aria-modal="true" aria-labelledby="autoTitle">
+  <form class="modal" id="autoForm">
+    <div class="m-head"><h2 id="autoTitle">자동 출퇴근 설정</h2><button type="button" class="m-close" id="autoX" aria-label="닫기"><span class="ms">close</span></button></div>
+    <p class="desc">재택근무일에만 설정 시각 이후 5분 단위로 자동 등록합니다. 실패하면 5분 간격으로 2번 더 시도하고, 결과는 텔레그램으로 알려줍니다. 재택이 아닌 날은 건너뜁니다.</p>
+    <div class="row">
+      <label for="autoEnabled">자동 출퇴근 사용</label>
+      <label class="switch"><input type="checkbox" id="autoEnabled"><span></span></label>
+    </div>
+    <div class="row">
+      <label for="autoStart">출근 시각 <small>07:30~10:00</small></label>
+      <input type="time" id="autoStart" min="07:30" max="10:00" step="300">
+    </div>
+    <div class="row">
+      <label for="autoEnd">퇴근 시각 <small>16:30~19:00</small></label>
+      <input type="time" id="autoEnd" min="16:30" max="19:00" step="300">
+    </div>
+    <p class="last" id="autoLast"></p>
+    <p class="err" id="autoErr"></p>
+    <div class="actions">
+      <button type="button" class="btn" id="autoCancel">취소</button>
+      <button type="submit" class="btn primary save" id="autoSave">저장</button>
+    </div>
+  </form>
+</div>
+<div class="modal-bg" id="applyModal" role="dialog" aria-modal="true" aria-labelledby="applyTitle">
+  <form class="modal wide" id="applyForm">
+    <div class="m-head"><h2 id="applyTitle"></h2><button type="button" class="m-close" id="applyX" aria-label="닫기"><span class="ms">close</span></button></div>
+    <p class="desc" id="applyDesc"></p>
+    <div id="applyBody"></div>
+    <label class="f-label">결재선</label>
+    <div class="line" id="applyLine"></div>
+    <label class="f-label" for="applyRsn">신청 사유 <span class="req">*</span></label>
+    <textarea class="f-text" id="applyRsn" placeholder="예: 개인 사정"></textarea>
+    <div class="summary" id="applySummary"></div>
+    <p class="err" id="applyErr"></p>
+    <div class="actions">
+      <button type="button" class="btn" id="applyCancel">취소</button>
+      <button type="submit" class="btn primary save" id="applySubmit">신청</button>
+    </div>
+  </form>
+</div>
+<script>
+(function () {
+  var params = new URLSearchParams(location.search);
+  var id = '';  // 로그인한 JadeHR 아이디 (/api/auth/me)
+  var now = new Date();
+  var year = parseInt(params.get('year'), 10) || now.getFullYear();
+  var month = parseInt(params.get('month'), 10) || (now.getMonth() + 1);
+  var loading = false;
+  var auto = null;      // 자동 출퇴근 설정
+  var lastData = null;  // 마지막으로 그린 달력 데이터
+
+  var $ = function (sel) { return document.querySelector(sel); };
+  var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]; }); };
+  var hm = function (t) { return t ? String(t).slice(0, 5) : null; };
+  var pad = function (n) { return (n < 10 ? '0' : '') + n; };
+  var todayStr = now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate());
+
+  // 근무유형: '…근무…' 가 아니면 휴일(휴일·추석·개천절·대체휴일 등)
+  function typeClass(t) {
+    if (!t) return '';
+    if (t.indexOf('재택') >= 0) return 'home';
+    if (t.indexOf('근무') >= 0) return 'work';
+    return 'off';
+  }
+
+  // 연차 이벤트: '연차휴가(8h)' → { label: '연차 8h', hours: 8 }
+  function leaveOf(ev) {
+    if (!/연차|휴가|반차|병가|경조/.test(ev)) return null;
+    var m = ev.match(/\((\d+(?:\.\d+)?)h\)/);
+    var hours = m ? parseFloat(m[1]) : (ev.indexOf('반차') >= 0 ? 4 : 8);
+    var name = ev.replace(/\(.*\)/, '').replace('휴가', '').trim() || '휴가';
+    return { label: name + ' ' + hours + 'h', hours: hours };
+  }
+
+  function syncUrl() {
+    var p = new URLSearchParams();
+    p.set('year', year); p.set('month', month);
+    history.replaceState(null, '', location.pathname + '?' + p.toString());
+  }
+
+  function setNav() {
+    $('#month').textContent = year + '년 ' + month + '월';
+    ['#prev', '#next', '#thisMonth'].forEach(function (s) { $(s).disabled = loading || !id; });
+    $('#autoBtn').disabled = !id || !auto;
+    $('#planBtn').disabled = !id;
+  }
+
+  function renderWho() {
+    if (!id) { $('#who').textContent = ''; return; }
+    var label = '<span>' + (auto && auto.nickname && auto.nickname !== id ? esc(auto.nickname) + ' · ' : '') + esc(id) + '</span>';
+    if (auto) {
+      label += auto.enabled
+        ? '<span class="bd green">자동 출퇴근 ' + esc(auto.startTime || '--:--') + ' / ' + esc(auto.endTime || '--:--') + '</span>'
+        : '<span class="bd">자동 출퇴근 꺼짐</span>';
+    }
+    $('#who').innerHTML = label;
+  }
+
+  function goLogin() {
+    location.replace('/login.html?next=' + encodeURIComponent(location.pathname + location.search));
+  }
+
+  function api(url, options) {
+    return fetch(url, Object.assign({ headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' } }, options))
+      .then(function (res) {
+        if (res.status === 401) { goLogin(); return new Promise(function () {}); }
+        return res.json().catch(function () { return {}; }).then(function (body) {
+          if (!res.ok) throw new Error(body.message || ('요청 실패 (HTTP ' + res.status + ')'));
+          return body;
+        });
+      });
+  }
+
+  function loadAuto() {
+    auto = null;
+    renderWho(); setNav();
+    if (!id) return;
+    api('/api/jadehr/auto-attendance?id=' + encodeURIComponent(id))
+      .then(function (body) { auto = body; })
+      .catch(function () { auto = null; })
+      .then(function () { renderWho(); setNav(); if (lastData) render(lastData); });
+  }
+
+  // ---- 근무 일정 자동 등록 ----
+  var plan = null;
+  function loadPlan() {
+    plan = null;
+    if (!id) return;
+    api('/api/jadehr/work-plan?id=' + encodeURIComponent(id)).then(function (b) { plan = b; }).catch(function () { plan = null; });
+  }
+  function openPlan() {
+    var p = plan || { enabled: false, startTime: '08:00', endTime: '19:00' };
+    $('#planEnabled').checked = !!p.enabled;
+    $('#planStart').value = p.startTime || '08:00';
+    $('#planEnd').value = p.endTime || '19:00';
+    $('#planLast').textContent = p.lastRunAt ? ('마지막 실행: ' + p.lastRunAt + ' · ' + (p.lastSuccess ? '성공' : '실패') + (p.lastMessage ? ' · ' + p.lastMessage : '')) : '아직 실행 전';
+    $('#planErr').textContent = '';
+    $('#planModal').classList.add('open');
+  }
+  function closePlan() { $('#planModal').classList.remove('open'); }
+  function planBody() {
+    return { enabled: $('#planEnabled').checked, startTime: $('#planStart').value, endTime: $('#planEnd').value };
+  }
+  function savePlan(e) {
+    e.preventDefault();
+    var b = planBody();
+    if (!b.startTime || !b.endTime || b.endTime <= b.startTime) { $('#planErr').textContent = '종료 시각은 시작 시각보다 늦어야 합니다.'; return; }
+    $('#planSave').disabled = true;
+    api('/api/jadehr/work-plan?id=' + encodeURIComponent(id), { method: 'PUT', body: JSON.stringify(b) })
+      .then(function (saved) { plan = saved; closePlan(); })
+      .catch(function (err) { $('#planErr').textContent = err.message; })
+      .then(function () { $('#planSave').disabled = false; });
+  }
+  function previewPlan() {
+    var b = planBody();
+    $('#planErr').textContent = '';
+    $('#planLast').textContent = 'JadeHR에서 등록 가능한 날을 확인하는 중…';
+    api('/api/jadehr/work-plan/run?id=' + encodeURIComponent(id) + '&dryRun=true&startTime=' + b.startTime + '&endTime=' + b.endTime, { method: 'POST' })
+      .then(function (r) {
+        $('#planLast').textContent = r.success
+          ? '등록 예정 ' + r.dates.length + '일' + (r.dates.length ? ' (' + r.dates[0] + ' ~ ' + r.dates[r.dates.length - 1] + ')' : '') + ' · ' + b.startTime + '~' + b.endTime
+          : '확인 실패: ' + r.message;
+      })
+      .catch(function (err) { $('#planLast').textContent = ''; $('#planErr').textContent = err.message; });
+  }
+
+  function openAuto() {
+    if (!auto) return;
+    $('#autoEnabled').checked = !!auto.enabled;
+    $('#autoStart').value = auto.startTime || '08:30';
+    $('#autoEnd').value = auto.endTime || '17:30';
+    $('#autoLast').innerHTML = '오늘 출근: ' + runText(auto.todayStart) + '<br>오늘 퇴근: ' + runText(auto.todayEnd);
+    $('#autoErr').textContent = '';
+    $('#autoModal').classList.add('open');
+    $('#autoEnabled').focus();
+  }
+
+  function closeAuto() { $('#autoModal').classList.remove('open'); }
+
+  function runText(run) {
+    if (!run || !run.status) return '아직 실행 전';
+    var label = { SUCCESS: '성공', FAILED: '실패', SKIPPED: '건너뜀' }[run.status] || run.status;
+    var max = (auto && auto.maxAttempts) || 3;
+    var text = label + ' (' + run.attempts + '/' + max + '회)';
+    if (run.status === 'FAILED' && run.attempts < max) text += ' · 재시도 예정';
+    if (run.message) text += ' · ' + run.message;
+    return esc(text);
+  }
+
+  function inRange(v, min, max) { return !v || (v >= min && v <= max); }
+
+  function saveAuto(e) {
+    e.preventDefault();
+    var body = {
+      enabled: $('#autoEnabled').checked,
+      startTime: $('#autoStart').value || null,
+      endTime: $('#autoEnd').value || null
+    };
+    if (body.enabled && !body.startTime && !body.endTime) { $('#autoErr').textContent = '출근 또는 퇴근 시각을 입력하세요.'; return; }
+    if (!inRange(body.startTime, '07:30', '10:00')) { $('#autoErr').textContent = '출근 시각은 07:30 ~ 10:00 사이여야 합니다.'; return; }
+    if (!inRange(body.endTime, '16:30', '19:00')) { $('#autoErr').textContent = '퇴근 시각은 16:30 ~ 19:00 사이여야 합니다.'; return; }
+    $('#autoSave').disabled = true; $('#autoErr').textContent = '';
+    api('/api/jadehr/auto-attendance?id=' + encodeURIComponent(id), { method: 'PUT', body: JSON.stringify(body) })
+      .then(function (saved) {
+        auto = saved; closeAuto(); renderWho(); if (lastData) render(lastData);
+      })
+      .catch(function (err) { $('#autoErr').textContent = err.message; })
+      .then(function () { $('#autoSave').disabled = false; });
+  }
+
+  function askId() { goLogin(); }
+
+  // ---- 결재 진행 중 신청 (우리 DB) ----
+  var appCache = {};
+  var SPAN_LABEL = { ALL: '종일', AM: '오전', PM: '오후', CUSTOM: '' };
+
+  // 그날 결재중 신청 중 아직 JadeHR 캘린더에 반영되지 않은 것
+  function pendingOf(date, cal) {
+    var out = { home: false, leaves: [], leaveHours: 0, atts: [] };
+    (appCache[date] || []).forEach(function (a) {
+      if (a.type === 'HOME') { if (cal.tc !== 'home') out.home = true; }
+      else if (a.type === 'LEAVE') {
+        if (cal.leaveSum > 0) return; // 캘린더에 휴가가 보이면 반영된 것으로 본다
+        var name = (a.leaveTypeName || '휴가').replace('휴가', '') || '휴가';
+        var span = a.leaveSpan === 'CUSTOM' ? (a.startTime + '~' + a.endTime) : (SPAN_LABEL[a.leaveSpan] || '');
+        out.leaves.push((name + ' ' + span).trim());
+        out.leaveHours += a.leaveHours || 0;
+      } else if (a.type === 'ATTENDANCE') {
+        var needIn = a.inOutClass !== '20', needOut = a.inOutClass !== '10';
+        if ((needIn && !cal.start) || (needOut && !cal.end)) {
+          out.atts.push({ '10': '출근 ' + a.startTime, '20': '퇴근 ' + a.endTime, '30': '출퇴근 ' + a.startTime + '~' + a.endTime }[a.inOutClass] || '출퇴근 요청');
+        }
+      }
+    });
+    return out;
+  }
+
+  function render(data) {
+    lastData = data;
+    var byDate = {};
+    (data.days || []).forEach(function (d) { byDate[d.date] = d; dayCache[d.date] = d; });
+    // 같은 달을 다시 그릴 때 중복되지 않도록 이 달 것만 새로 채운다
+    var ym = year + '-' + pad(month) + '-';
+    Object.keys(appCache).forEach(function (k) { if (k.indexOf(ym) === 0) delete appCache[k]; });
+    (data.applications || []).forEach(function (a) { (appCache[a.date] = appCache[a.date] || []).push(a); });
+
+    var first = new Date(year, month - 1, 1);
+    var last = new Date(year, month, 0).getDate();
+    var lead = first.getDay();
+    var html = ['일','월','화','수','목','금','토'].map(function (d, i) {
+      return '<div class="dow' + (i === 0 ? ' sun' : i === 6 ? ' sat' : '') + '">' + d + '</div>';
+    }).join('');
+
+    for (var i = 0; i < lead; i++) html += '<div class="cell empty"></div>';
+
+    var missCount = 0, shortCount = 0;
+    for (var day = 1; day <= last; day++) {
+      var date = year + '-' + pad(month) + '-' + pad(day);
+      var d = byDate[date] || {};
+      var dow = (lead + day - 1) % 7;
+      var tc = typeClass(d.workType);
+      var start = hm(d.actualStartTime), end = hm(d.actualEndTime);
+      var past = date < todayStr;
+
+      var leaves = [], others = [];
+      (d.events || []).forEach(function (ev) { var l = leaveOf(ev); if (l) leaves.push(l); else others.push(ev); });
+      var leaveSum = leaves.reduce(function (a, l) { return a + l.hours; }, 0);
+      var fullLeave = leaveSum >= 8;
+
+      // 결재 진행 중 신청 — JadeHR 캘린더에 이미 반영된 건 캘린더 쪽을 보여준다
+      var pend = pendingOf(date, { tc: tc, leaveSum: leaveSum, start: start, end: end });
+      var pendFullLeave = !fullLeave && pend.leaveHours >= 8;
+
+      // 칸 배경은 휴일만 회색 (재택·휴가는 뱃지·기록 칩으로 표시)
+      var holiName = tc === 'off' && d.workType && d.workType !== '휴일' ? d.workType : '';
+      var bg = tc === 'off' ? ' off' + (holiName ? ' holi' : '') : '';
+      var cls = 'cell' + bg + (dow === 0 ? ' sun' : dow === 6 ? ' sat' : '') + (date === todayStr ? ' today' : '') + (picked[date] ? ' sel' : '');
+      html += '<div class="' + cls + '" data-date="' + date + '">';
+      html += '<div class="num">' + day + '</div>';
+
+      var chips = '';
+      if (tc === 'home') chips += '<span class="bd green" title="' + esc(d.workType) + '">재택</span>';
+      if (holiName) chips += '<span class="bd red" title="' + esc(holiName) + '">' + esc(holiName) + '</span>';
+      if (pend.home) chips += '<span class="bd brand" title="결재 진행 중"><span class="pd">결재중 </span>재택</span>';
+      pend.leaves.forEach(function (l) { chips += '<span class="bd brand" title="결재 진행 중"><span class="pd">결재중 </span>' + esc(l) + '</span>'; });
+      pend.atts.forEach(function (l) { chips += '<span class="bd brand" title="결재 진행 중"><span class="pd">결재중 </span>' + esc(l) + '</span>'; });
+      if (chips) html += '<div class="chips">' + chips + '</div>';
+
+      var recs = '';
+      leaves.forEach(function (l) { recs += '<span class="rc leave"><span>' + esc(l.label) + '</span></span>'; });
+
+      var planSta = hm(d.planStartTime), planEnd = hm(d.planEndTime);
+      if (!start && !end && planSta && planEnd && tc !== 'off' && !fullLeave) {
+        html += '<div class="plan" title="JadeHR 근무 계획(일정)"><span class="pl">계획 </span><span>' + planSta + '</span><span class="tl"> ~ </span><span>' + planEnd + '</span></div>';
+      }
+      if (start || end) {
+        var missing = start && !end && past && !fullLeave;
+        if (missing && !pend.atts.length) missCount++; // 출퇴근 등록 요청이 결재중이면 세지 않음
+        if (start) recs += '<span class="rc in" title="출근"><span><span class="lb">출근</span><b>' + start + '</b></span></span>';
+        if (end) recs += '<span class="rc out" title="퇴근"><span><span class="lb">퇴근</span><b>' + end + '</b></span></span>';
+        else if (missing) recs += '<span class="bd red">퇴근 누락</span>';
+        else if (planEnd) recs += '<span class="plan" title="계획 퇴근"><span class="pl">퇴근 예정 </span>' + planEnd + '</span>';
+      }
+      if (recs) html += '<div class="recs">' + recs + '</div>';
+      // 근무시간(휴게 제외) + 연차 시간이 8시간 미만인 날 (출퇴근 둘 다 찍힌 날만)
+      if (start && end && date <= todayStr && tc !== 'off' && !fullLeave) {
+        // 2시간 연차는 점심시간 포함(근무에서 점심 안 뺌), 반차(4시간)·연차 없음은 점심시간 제외
+        var worked = workMinutes(start, end, leaveSum > 0 && leaveSum < 4);
+        if (worked + leaveSum * 60 < 480) {
+          shortCount++;
+          html += '<div class="chips"><span class="bd yellow" title="근무시간(휴게 제외)' + (leaveSum ? ' + 연차' : '') + '">근무 ' + fmtMin(worked) + (leaveSum ? ' + 연차 ' + leaveSum + 'h' : '') + '</span></div>';
+        }
+      }
+      if (auto && auto.enabled && (tc === 'home' || pend.home) && date >= todayStr) {
+        html += '<div class="auto" title="자동 출퇴근 예정"><span class="ms">schedule</span><span>' + esc(auto.startTime || '--:--') + '</span><span class="tl"> / </span><span>' + esc(auto.endTime || '--:--') + '</span></div>';
+      }
+      others.forEach(function (ev) { html += '<div class="ev">' + esc(ev) + '</div>'; });
+      html += '</div>';
+    }
+    var tail = (7 - (lead + last) % 7) % 7;
+    for (var j = 0; j < tail; j++) html += '<div class="cell empty"></div>';
+
+    $('#content').innerHTML = '<div class="grid">' + html + '</div>';
+    $('#cntMiss').textContent = missCount;
+    $('#cntShort').textContent = shortCount;
+    $('#cntMiss').parentNode.classList.toggle('zero', !missCount);
+    $('#cntShort').parentNode.classList.toggle('zero', !shortCount);
+    renderPicked();
+  }
+
+  // 근무시간(분): 퇴근-출근에서 점심시간과 겹친 만큼 뺀다.
+  // 점심시간 13:30~14:30 은 JadeHR 휴가 시간 계산(09:30~13:30=4h, 13:30~18:30=4h, 14:30~18:30=4h)에서 역산한 값
+  var LUNCH = [13 * 60 + 30, 14 * 60 + 30];
+  function workMinutes(start, end, lunchInLeave) {
+    var toMin = function (t) { return parseInt(t.slice(0, 2), 10) * 60 + parseInt(t.slice(3, 5), 10); };
+    var s = toMin(start), e = toMin(end);
+    if (e < s) e += 24 * 60; // 자정 넘김
+    if (lunchInLeave) return e - s; // 점심시간이 연차 시간 안에 들어 있음
+    var overlap = Math.max(0, Math.min(e, LUNCH[1]) - Math.max(s, LUNCH[0]));
+    return Math.max(0, e - s - overlap);
+  }
+
+  function fmtMin(m) {
+    var h = Math.floor(m / 60), r = m % 60;
+    return h + 'h' + (r ? ' ' + r + 'm' : '');
+  }
+
+  // ---- 신청용 날짜 선택 ----
+  var picked = {};
+
+  function pickedDates() { return Object.keys(picked).sort(); }
+
+  function renderPicked() {
+    var dates = pickedDates();
+    var none = dates.length === 0;
+    $('#picked').innerHTML = none
+      ? '달력에서 날짜를 눌러 선택하세요'
+      : '선택 <b>' + dates.length + '일</b> · ' + dates.map(function (d) { return parseInt(d.slice(5, 7), 10) + '/' + parseInt(d.slice(8), 10); }).join(', ');
+    document.querySelectorAll('#applyBar button').forEach(function (b) { b.disabled = none || !id; });
+    $('#applyNote').hidden = true;
+  }
+
+  function togglePick(date) {
+    if (picked[date]) delete picked[date]; else picked[date] = true;
+    var cell = document.querySelector('.cell[data-date="' + date + '"]');
+    if (cell) cell.classList.toggle('sel', !!picked[date]);
+    renderPicked();
+  }
+
+  function clearPick() {
+    picked = {};
+    document.querySelectorAll('.cell.sel').forEach(function (c) { c.classList.remove('sel'); });
+    renderPicked();
+  }
+
+  // ---- 신청 팝업 ----
+  var dayCache = {};
+  var applyKind = null;
+  var DOW = ['일','월','화','수','목','금','토'];
+  var LEAVE_TYPES = [
+    ['4010', '연차휴가'], ['5010', '휴일대체'], ['5020', '휴일대체(오전)'], ['5030', '휴일대체(오후)'], ['6020', '포상휴가'], ['6090', '귀임휴가']
+  ];
+  // 결재선: 팝업을 열 때 JadeHR 신청서를 열어 받은 기본 결재선 (사람마다 다름)
+  var API_TYPE = { home: 'HOME', leave: 'LEAVE', att: 'ATTENDANCE' };
+  var applyLine = null;   // { members: [...] }
+  var lineExcluded = {};  // empId -> true (결재선에서 뺄 사람)
+  var lineReq = 0;
+
+  function dLabel(date) {
+    var dt = new Date(date + 'T00:00:00');
+    return (dt.getMonth() + 1) + '/' + dt.getDate() + ' (' + DOW[dt.getDay()] + ')';
+  }
+
+  function dayInfo(date) {
+    var d = dayCache[date] || {};
+    var leave = (d.events || []).map(leaveOf).filter(Boolean);
+    return {
+      date: date,
+      type: d.workType || '',
+      tc: typeClass(d.workType),
+      start: hm(d.actualStartTime), end: hm(d.actualEndTime),
+      fullLeave: leave.reduce(function (a, l) { return a + l.hours; }, 0) >= 8,
+      leaveText: leave.map(function (l) { return l.label; }).join(', '),
+      pend: pendingOf(date, { tc: typeClass(d.workType), leaveSum: leave.reduce(function (a, l) { return a + l.hours; }, 0), start: hm(d.actualStartTime), end: hm(d.actualEndTime) })
+    };
+  }
+
+  // 신청 대상에서 빠지는 날과 이유
+  function skipReason(kind, info) {
+    if (info.tc === 'off') return '휴일';
+    if (kind === 'home' && info.tc === 'home') return '이미 재택';
+    if (kind === 'home' && info.pend.home) return '이미 재택 신청함 (결재중)';
+    if (kind !== 'att' && info.fullLeave) return '이미 종일 휴가';
+    if (kind !== 'att' && info.pend.leaveHours >= 8) return '이미 휴가 신청함 (결재중)';
+    if (kind === 'att' && info.date > todayStr) return '오늘 이후 날짜는 요청할 수 없음';
+    return null;
+  }
+
+  function curText(info) {
+    var t = [];
+    if (info.type) t.push(info.type);
+    if (info.start && info.end) t.push(info.start + '~' + info.end);
+    else if (info.start) t.push('출근 ' + info.start + ' (퇴근 기록 없음)');
+    else if (info.end) t.push('퇴근 ' + info.end + ' (출근 기록 없음)');
+    if (info.leaveText) t.push(info.leaveText);
+    return t.join(' · ') || '정보 없음';
+  }
+
+  function loadLine(kind) {
+    var req = ++lineReq;
+    applyLine = null; lineExcluded = {};
+    $('#applyLine').innerHTML = '<span class="line-msg">JadeHR에서 결재선을 불러오는 중…</span>';
+    api('/api/jadehr/applications/approval-line?id=' + encodeURIComponent(id) + '&type=' + API_TYPE[kind])
+      .then(function (body) {
+        if (req !== lineReq) return;
+        applyLine = body;
+        (body.members || []).forEach(function (m) { if (m.excludedByDefault) lineExcluded[m.empId] = true; });
+        renderLine();
+      })
+      .catch(function (err) {
+        if (req !== lineReq) return;
+        $('#applyLine').innerHTML = '<span class="line-msg err">결재선을 불러오지 못했습니다: ' + esc(err.message) + '</span>';
+      });
+  }
+
+  function renderLine() {
+    var members = (applyLine && applyLine.members) || [];
+    if (!members.length) { $('#applyLine').innerHTML = '<span class="line-msg">결재선이 없습니다.</span>'; return; }
+    $('#applyLine').innerHTML = members.map(function (m, i) {
+      var ex = !!lineExcluded[m.empId];
+      var cls = 'p' + (ex ? ' ex' : '') + (m.removable ? ' toggle' : ' ok');
+      var label = esc(m.name) + ' · ' + esc(m.duty || (m.apprType === '30' ? '승인' : '결재')) + (m.apprType === '30' && m.name.indexOf('승인') < 0 ? ' (승인)' : '');
+      var attrs = m.removable
+        ? ' role="button" tabindex="0" data-emp="' + esc(m.empId) + '" aria-pressed="' + (!ex) + '" title="' + (ex ? '눌러서 결재선에 다시 넣기' : '눌러서 결재선에서 빼기') + '"'
+        : ' title="승인 단계는 JadeHR 이 자동으로 붙입니다"';
+      return (i ? '<span class="arrow ms" aria-hidden="true">chevron_right</span>' : '') + '<span class="' + cls + '"' + attrs + '>' + label + (ex ? ' · 제외' : '') + '</span>';
+    }).join('') + '<div class="line-help">결재자를 눌러 빼거나 다시 넣을 수 있습니다.</div>';
+  }
+
+  function toggleLine(e) {
+    var el = e.target.closest('[data-emp]');
+    if (!el) return;
+    if (e.type === 'keydown' && e.key !== 'Enter' && e.key !== ' ') return;
+    e.preventDefault();
+    var emp = el.getAttribute('data-emp');
+    if (lineExcluded[emp]) delete lineExcluded[emp]; else lineExcluded[emp] = true;
+    var left = ((applyLine && applyLine.members) || []).filter(function (m) { return m.removable && !lineExcluded[m.empId]; });
+    if (!left.length) { delete lineExcluded[emp]; $('#applyErr').textContent = '결재자는 한 명 이상 있어야 합니다.'; }
+    else $('#applyErr').textContent = '';
+    renderLine();
+  }
+
+  function bodyFor(kind, dates) {
+    var rows = dates.map(function (date) {
+      var info = dayInfo(date), skip = skipReason(kind, info);
+      var html = '<div class="day-row' + (skip ? ' skip' : '') + '" data-date="' + date + '">' +
+        '<div class="head"><span class="d">' + dLabel(date) + '</span><span class="cur">' + esc(skip ? '제외: ' + skip : curText(info)) + '</span></div>';
+      var TIMES = function (sta, end, step, staLabel, endLabel) {
+        return '<div class="times"><div class="times-in">' +
+          '<label class="tf sta-f"><span>' + staLabel + '</span><input type="time" class="ctl sta" value="' + sta + '"' + step + '></label>' +
+          '<label class="tf end-f"><span>' + endLabel + '</span><input type="time" class="ctl end" value="' + end + '"' + step + '></label>' +
+          '</div></div>';
+      };
+      if (!skip && kind === 'leave') {
+        html += '<div class="ctrl two"><select class="ctl lt" aria-label="휴가 종류">' + LEAVE_TYPES.map(function (t) { return '<option value="' + t[0] + '">' + t[1] + '</option>'; }).join('') + '</select>' +
+          '<select class="ctl span" aria-label="사용 구간"><option value="all">종일</option><option value="am">오전</option><option value="pm">오후</option><option value="custom">시간 지정</option></select></div>' +
+          TIMES('09:30', '18:30', ' step="1800"', '시작', '종료');
+      }
+      if (!skip && kind === 'att') {
+        var cls = info.start && !info.end ? '20' : !info.start && info.end ? '10' : '30';
+        html += '<div class="ctrl"><select class="ctl io" aria-label="등록할 기록"><option value="10"' + (cls === '10' ? ' selected' : '') + '>출근 기록</option>' +
+          '<option value="20"' + (cls === '20' ? ' selected' : '') + '>퇴근 기록</option>' +
+          '<option value="30"' + (cls === '30' ? ' selected' : '') + '>출퇴근 기록</option></select></div>' +
+          TIMES(info.start || '09:30', info.end || '18:30', '', '출근 시각', '퇴근 시각');
+      }
+      return html + '</div>';
+    }).join('');
+
+    var top = '';
+    if (kind === 'home') {
+      top = '<label class="f-label">변경 근무유형</label><input class="ctl f-input" value="재택근무제" disabled>';
+    }
+    return top + '<label class="f-label">신청 날짜</label><div class="days" id="applyDays">' + rows + '</div>';
+  }
+
+  // 휴가 사용 구간 기본 시각 (시간은 직접 바꿀 수 있음)
+  var LEAVE_SPANS = { all: ['09:30', '18:30'], am: ['09:30', '13:30'], pm: ['14:30', '18:30'] };
+  var LEAVE_FIXED_SPAN = { '5020': 'am', '5030': 'pm' };
+
+  function syncRows(e) {
+    document.querySelectorAll('#applyDays .day-row').forEach(function (row) {
+      var times = row.querySelector('.times');
+      var lt = row.querySelector('.lt'), span = row.querySelector('.span');
+      if (lt && span) {
+        // 휴일대체(오전)·(오후)는 구간이 정해져 있다
+        var fixed = LEAVE_FIXED_SPAN[lt.value];
+        if (fixed) span.value = fixed;
+        span.disabled = !!fixed;
+        if (e && (e.target === span || e.target === lt) && LEAVE_SPANS[span.value]) {
+          row.querySelector('.sta').value = LEAVE_SPANS[span.value][0];
+          row.querySelector('.end').value = LEAVE_SPANS[span.value][1];
+        }
+        times.classList.toggle('open', span.value !== 'all');
+      }
+      var io = row.querySelector('.io');
+      if (io) {
+        row.querySelector('.sta-f').hidden = io.value === '20';
+        row.querySelector('.end-f').hidden = io.value === '10';
+        times.classList.add('open');
+      }
+    });
+    renderSummary();
+  }
+
+  function targetDates() {
+    return [].slice.call(document.querySelectorAll('#applyDays .day-row:not(.skip)')).map(function (r) { return r.getAttribute('data-date'); });
+  }
+
+  function renderSummary() {
+    var n = targetDates().length, all = pickedDates().length;
+    var text;
+    var name = { home: '재택 근무 신청서', leave: '휴가 신청서', att: '출퇴근시각 등록 요청서' }[applyKind];
+    text = name + '를 날짜마다 1건씩, <b>' + n + '건</b> 올립니다.';
+    if (all > n) text += '<br>선택한 ' + all + '일 중 ' + (all - n) + '일은 대상이 아니라 제외됩니다.';
+    $('#applySummary').innerHTML = text;
+    $('#applySubmit').disabled = n === 0;
+  }
+
+  function onApply(kind) {
+    var dates = pickedDates();
+    if (!dates.length) return;
+    applyKind = kind;
+    var sb = $('#applySubmit'); sb.onclick = null; sb.textContent = '신청';
+    var meta = {
+      home: ['재택 근무 신청', '선택한 날짜의 근무유형을 재택근무제로 바꾸는 신청서를 올립니다.'],
+      leave: ['휴가 신청', '날짜마다 휴가 종류와 종일·오전·오후·시간을 골라 신청서를 올립니다.'],
+      att: ['출퇴근 등록 요청', '빠진 출근·퇴근 기록을 등록해 달라는 요청서를 올립니다. 달력에 있는 기록으로 미리 채워 둡니다.']
+    }[kind];
+    $('#applyTitle').textContent = meta[0];
+    $('#applyDesc').textContent = meta[1];
+    $('#applyBody').innerHTML = bodyFor(kind, dates);
+    loadLine(kind);
+    $('#applyRsn').value = '';
+    $('#applyErr').textContent = '';
+    syncRows();
+    $('#applyModal').classList.add('open');
+  }
+
+  function closeApply() { $('#applyModal').classList.remove('open'); applyKind = null; }
+
+  // 지금은 재택만 실제 신청. 휴가·출퇴근 요청은 준비 중
+  var SUBMIT_READY = { home: true, leave: true, att: true };
+
+  // 날짜별 세부 값 (출퇴근: 구분·시각)
+  function collectItems() {
+    return [].slice.call(document.querySelectorAll('#applyDays .day-row:not(.skip)')).map(function (row) {
+      var item = { date: row.getAttribute('data-date') };
+      var lt = row.querySelector('.lt');
+      if (lt) {
+        item.leaveTypeCode = lt.value;
+        item.leaveSpan = { all: 'ALL', am: 'AM', pm: 'PM', custom: 'CUSTOM' }[row.querySelector('.span').value];
+        if (item.leaveSpan !== 'ALL') {
+          item.startTime = row.querySelector('.sta').value;
+          item.endTime = row.querySelector('.end').value;
+        }
+      }
+      var io = row.querySelector('.io');
+      if (io) {
+        item.inOutClass = io.value;
+        if (io.value !== '20') item.startTime = row.querySelector('.sta').value;
+        if (io.value !== '10') item.endTime = row.querySelector('.end').value;
+      }
+      return item;
+    });
+  }
+
+  function submitApply(e) {
+    e.preventDefault();
+    var err = $('#applyErr');
+    var reason = $('#applyRsn').value.trim();
+    if (!reason) { err.textContent = '신청 사유를 입력하세요.'; return; }
+    if (!SUBMIT_READY[applyKind]) { err.textContent = '이 신청서는 아직 준비 중입니다. 재택 신청만 먼저 됩니다.'; return; }
+    if (!applyLine) { err.textContent = '결재선을 불러온 뒤에 신청할 수 있습니다.'; return; }
+    var approvers = (applyLine.members || []).filter(function (m) { return m.removable && !lineExcluded[m.empId]; })
+      .map(function (m) { return m.empId; });
+    if (!approvers.length) { err.textContent = '결재자는 한 명 이상 있어야 합니다.'; return; }
+    var dates = targetDates();
+    if (!dates.length) { err.textContent = '신청할 수 있는 날짜가 없습니다.'; return; }
+
+    var btn = $('#applySubmit');
+    btn.disabled = true; btn.textContent = '신청 중…';
+    err.textContent = '';
+    api('/api/jadehr/applications?id=' + encodeURIComponent(id), {
+      method: 'POST',
+      body: JSON.stringify({ type: API_TYPE[applyKind], dates: dates, reason: reason, approverEmpIds: approvers, items: collectItems() })
+    })
+      .then(function (res) {
+        var results = res.results || [];
+        var ok = results.filter(function (r) { return r.success; });
+        var fail = results.filter(function (r) { return !r.success; });
+        $('#applySummary').innerHTML =
+          '<b>' + ok.length + '건 신청 완료</b>' + (fail.length ? ', <span style="color:var(--sun)">' + fail.length + '건 실패</span>' : '') +
+          results.map(function (r) {
+            return '<br>' + dLabel(r.date) + ' — ' + (r.success ? '신청 완료' : '<span style="color:var(--sun)">' + esc(r.message) + '</span>');
+          }).join('');
+        if (ok.length) {
+          ok.forEach(function (r) { delete picked[r.date]; });
+          load(); // 결재 진행 중 표시 반영
+        }
+        btn.textContent = '닫기';
+        btn.disabled = false;
+        btn.onclick = function (ev) { ev.preventDefault(); btn.onclick = null; btn.textContent = '신청'; closeApply(); };
+      })
+      .catch(function (ex) {
+        err.textContent = ex.message;
+        btn.disabled = false; btn.textContent = '신청';
+      });
+  }
+
+  function load() {
+    if (!id) { setNav(); askId(); return; }
+    loading = true;
+    syncUrl(); setNav();
+    renderWho();
+    lastData = null;
+    $('#content').innerHTML = '<div class="msg">JadeHR에서 불러오는 중…</div>';
+
+    var q = '?id=' + encodeURIComponent(id) + '&year=' + year + '&month=' + month;
+    var getJson = function (url) {
+      return fetch(url, { headers: { 'Accept': 'application/json' } }).then(function (res) {
+        if (res.status === 401) { goLogin(); return new Promise(function () {}); }
+        return res.json().catch(function () { return {}; }).then(function (body) {
+          if (!res.ok) throw new Error(body.message || ('조회 실패 (HTTP ' + res.status + ')'));
+          return body;
+        });
+      });
+    };
+    // 결재 진행 중 신청은 못 불러와도 캘린더는 보여준다
+    var apps = getJson('/api/jadehr/applications' + q).catch(function () { return []; });
+    Promise.all([getJson('/api/jadehr/attendance-calendar/by-id' + q), apps])
+      .then(function (r) {
+        r[0].applications = Array.isArray(r[1]) ? r[1] : [];
+        render(r[0]);
+      })
+      .catch(function (err) {
+        $('#content').innerHTML = '<div class="msg error">' + esc(err.message) + '</div>';
+      })
+      .then(function () { loading = false; setNav(); });
+  }
+
+  function move(delta) {
+    month += delta;
+    if (month < 1) { month = 12; year--; }
+    if (month > 12) { month = 1; year++; }
+    load();
+  }
+
+  $('#prev').addEventListener('click', function () { move(-1); });
+  $('#next').addEventListener('click', function () { move(1); });
+  $('#thisMonth').addEventListener('click', function () { year = now.getFullYear(); month = now.getMonth() + 1; load(); });
+  $('#content').addEventListener('click', function (e) {
+    var cell = e.target.closest('.cell[data-date]');
+    if (cell) togglePick(cell.getAttribute('data-date'));
+  });
+  $('#clearPick').addEventListener('click', clearPick);
+  document.querySelectorAll('#applyBar [data-apply]').forEach(function (b) {
+    b.addEventListener('click', function () { onApply(b.getAttribute('data-apply')); });
+  });
+  $('#applyCancel').addEventListener('click', closeApply);
+  $('#applyX').addEventListener('click', closeApply);
+  $('#planX').addEventListener('click', function () { closePlan(); });
+  $('#autoX').addEventListener('click', function () { closeAuto(); });
+  $('#applyLine').addEventListener('click', toggleLine);
+  $('#applyLine').addEventListener('keydown', toggleLine);
+  $('#applyForm').addEventListener('submit', submitApply);
+  $('#applyBody').addEventListener('change', syncRows);
+  $('#applyModal').addEventListener('click', function (e) { if (e.target.id === 'applyModal') closeApply(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeApply(); });
+  $('#autoBtn').addEventListener('click', openAuto);
+  $('#planBtn').addEventListener('click', openPlan);
+  $('#planCancel').addEventListener('click', closePlan);
+  $('#planPreview').addEventListener('click', previewPlan);
+  $('#planForm').addEventListener('submit', savePlan);
+  $('#planModal').addEventListener('click', function (e) { if (e.target.id === 'planModal') closePlan(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closePlan(); });
+  $('#autoCancel').addEventListener('click', closeAuto);
+  $('#autoForm').addEventListener('submit', saveAuto);
+  $('#autoModal').addEventListener('click', function (e) { if (e.target.id === 'autoModal') closeAuto(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeAuto(); });
+
+  fetch('/api/auth/me', { headers: { 'Accept': 'application/json' } })
+    .then(function (res) {
+      if (!res.ok) { goLogin(); return; }
+      return res.json().then(function (me) {
+        id = me.id;
+        load();
+        loadAuto();
+        loadPlan();
+      });
+    })
+    .catch(function () { $('#content').innerHTML = '<div class="msg error">서버에 연결하지 못했습니다.</div>'; });
+})();
+</script>
+</body>
+</html>

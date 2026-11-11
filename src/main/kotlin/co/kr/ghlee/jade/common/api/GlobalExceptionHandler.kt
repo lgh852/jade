@@ -2,6 +2,7 @@ package co.kr.ghlee.jade.common.api
 
 import co.kr.ghlee.jade.api.auth.exception.JadeAuthRequiredException
 import co.kr.ghlee.jade.api.auth.exception.JadeAuthUserNotFoundException
+import co.kr.ghlee.jade.api.auth.exception.JadeLoginFailedException
 import co.kr.ghlee.jade.api.jadehr.exception.JadeHrLoginException
 import co.kr.ghlee.jade.api.jadehr.exception.JadeHrParseException
 import co.kr.ghlee.jade.api.jadehr.exception.JadeHrSessionRequiredException
@@ -27,6 +28,11 @@ class GlobalExceptionHandler {
     fun handleJadeAuthUserNotFoundException(exception: JadeAuthUserNotFoundException): ResponseEntity<ApiErrorResponse> =
         ResponseEntity.status(HttpStatus.UNAUTHORIZED)
             .body(ApiErrorResponse("JADE_AUTH_USER_NOT_FOUND", exception.message ?: "Jade auth user was not found."))
+
+    @ExceptionHandler(JadeLoginFailedException::class)
+    fun handleJadeLoginFailedException(exception: JadeLoginFailedException): ResponseEntity<ApiErrorResponse> =
+        ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            .body(ApiErrorResponse("LOGIN_FAILED", exception.message ?: "로그인에 실패했습니다."))
 
     @ExceptionHandler(JadeHrLoginException::class)
     fun handleLoginException(exception: JadeHrLoginException): ResponseEntity<ApiErrorResponse> {
@@ -58,6 +64,11 @@ class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
             .body(ApiErrorResponse("JADEHR_CONNECTION_FAILED", exception.rootCauseMessage()))
     }
+
+    @ExceptionHandler(IllegalArgumentException::class)
+    fun handleIllegalArgument(exception: IllegalArgumentException): ResponseEntity<ApiErrorResponse> =
+        ResponseEntity.badRequest()
+            .body(ApiErrorResponse("BAD_REQUEST", exception.message ?: "Invalid request."))
 
     @ExceptionHandler(MethodArgumentNotValidException::class, ServerWebInputException::class)
     fun handleBadRequest(exception: Exception): ResponseEntity<ApiErrorResponse> =

@@ -16,6 +16,9 @@ data class AttendanceDay(
     val actualStartTime: LocalTime?,
     val actualEndTime: LocalTime?,
     val events: List<String>,
+    /** 계획(일정) 시각 — JadeHR 근태현황에 회색으로 보이는 값 */
+    val planStartTime: LocalTime? = null,
+    val planEndTime: LocalTime? = null,
 )
 
 data class AttendanceSummary(

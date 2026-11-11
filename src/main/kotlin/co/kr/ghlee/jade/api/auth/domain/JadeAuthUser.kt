@@ -47,6 +47,13 @@ class JadeAuthUser(
             password = password,
         )
 
+    /** 화면 로그인에서 JadeHR 로그인에 성공한 비밀번호로 바꾼다 */
+    fun changePassword(jadeHrPasswordEnc: String) {
+        this.jadeHrPasswordEnc = jadeHrPasswordEnc
+        this.active = true
+        this.updatedAt = LocalDateTime.now()
+    }
+
     fun updateCredential(
         nickname: String?,
         companyCode: String,
